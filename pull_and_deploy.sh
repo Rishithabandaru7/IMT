@@ -6,24 +6,63 @@ set -e
 # Variables
 DOCKER_USER="bandarurishitha"
 IMAGE_NAME="incident_app"
-CONTAINER_NAME="incident_app_container"
+FLASK_CONTAINER="incident_app_container"
+MYSQL_CONTAINER="mysql_container"
+MYSQL_ROOT_PASS="root@123"
+MYSQL_DB="incident_db"
 
-echo "Stopping any existing container..."
-if [ "$(docker ps -q -f name=$CONTAINER_NAME)" ]; then
-    sudo docker stop $CONTAINER_NAME
+# -------------------------------
+# 1️⃣ Start MySQL if not running
+# -------------------------------
+if [ ! "$(docker ps -q -f name=$MYSQL_CONTAINER)" ]; then
+    echo "Starting MySQL container..."
+    sudo docker run -d \
+        --name $MYSQL_CONTAINER \
+        -e MYSQL_ROOT_PASSWORD=$MYSQL_ROOT_PASS \
+        -e MYSQL_DATABASE=$MYSQL_DB \
+        -p 3308:3306 \
+        mysql:8
+else
+    echo "MySQL already running"
 fi
 
-if [ "$(docker ps -aq -f name=$CONTAINER_NAME)" ]; then
-    sudo docker rm $CONTAINER_NAME
+# Wait for MySQL to be ready
+echo "Waiting for MySQL to initialize..."
+until sudo docker exec $MYSQL_CONTAINER mysql -uroot -p$MYSQL_ROOT_PASS -e "SELECT 1;" &> /dev/null; do
+    sleep 2
+done
+echo "MySQL is ready!"
+
+# -------------------------------
+# 2️⃣ Stop old Flask container
+# -------------------------------
+echo "Stopping any existing Flask container..."
+if [ "$(docker ps -q -f name=$FLASK_CONTAINER)" ]; then
+    sudo docker stop $FLASK_CONTAINER
 fi
 
-echo "Pulling latest image from DockerHub..."
+if [ "$(docker ps -aq -f name=$FLASK_CONTAINER)" ]; then
+    sudo docker rm $FLASK_CONTAINER
+fi
+
+# -------------------------------
+# 3️⃣ Pull latest Flask image
+# -------------------------------
+echo "Pulling latest Flask image from DockerHub..."
 sudo docker pull $DOCKER_USER/$IMAGE_NAME:latest
 
-echo "Starting container..."
+# -------------------------------
+# 4️⃣ Start Flask container
+# -------------------------------
+echo "Starting Flask container..."
 sudo docker run -d \
-    --name $CONTAINER_NAME \
+    --name $FLASK_CONTAINER \
     -p 5000:5000 \
+    --link $MYSQL_CONTAINER:mysql \
+    -e DB_HOST=mysql \
+    -e DB_USER=root \
+    -e DB_PASSWORD=$MYSQL_ROOT_PASS \
+    -e DB_NAME=$MYSQL_DB \
     $DOCKER_USER/$IMAGE_NAME:latest
 
 echo "Deployment complete!"
