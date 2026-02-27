@@ -2,12 +2,12 @@
 set -e
 
 echo "Stopping existing containers..."
-sudo docker compose down || true
+sudo docker-compose down || true
 
 echo "Pulling latest images..."
-sudo docker compose pull
+sudo docker-compose pull
 
 echo "Starting containers..."
-sudo docker compose up -d
+sudo docker-compose up -d
 
 echo "Deployment successful!"
