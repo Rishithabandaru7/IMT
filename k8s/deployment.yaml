@@ -4,31 +4,27 @@ metadata:
   name: incident-app
   labels:
     app: incident-app
-
 spec:
   replicas: 1
-
   selector:
     matchLabels:
       app: incident-app
-
   template:
     metadata:
       labels:
         app: incident-app
-
     spec:
       containers:
       - name: incident-app
         image: bandarurishitha/incident_app:latest
-
         ports:
         - containerPort: 5000
-
-        resources:
-          requests:
-            cpu: "100m"
-            memory: "128Mi"
-          limits:
-            cpu: "250m"
-            memory: "256Mi"
+        env:
+          - name: DB_HOST
+            value: mysql
+          - name: DB_USER
+            value: root
+          - name: DB_PASSWORD
+            value: root@123
+          - name: DB_NAME
+            value: incident_db
