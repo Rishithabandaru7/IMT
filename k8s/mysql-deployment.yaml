@@ -10,12 +10,11 @@ spec:
       storage: 1Gi
 
 ---
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: mysql
-  labels:
-    app: mysql
 spec:
   replicas: 1
   selector:
@@ -30,28 +29,22 @@ spec:
       - name: mysql
         image: mysql:8
         env:
-          - name: MYSQL_ROOT_PASSWORD
-            value: "root@123"
-          - name: MYSQL_DATABASE
-            value: "incident_db"
+        - name: MYSQL_ROOT_PASSWORD
+          value: root@123
+        - name: MYSQL_DATABASE
+          value: incident_db
         ports:
-          - containerPort: 3306
+        - containerPort: 3306
         volumeMounts:
-          - mountPath: /var/lib/mysql
-            name: mysql-storage
-        resources:
-          requests:
-            memory: "128Mi"
-            cpu: "100m"
-          limits:
-            memory: "256Mi"
-            cpu: "250m"
+        - mountPath: /var/lib/mysql
+          name: mysql-storage
       volumes:
-        - name: mysql-storage
-          persistentVolumeClaim:
-            claimName: mysql-pvc
+      - name: mysql-storage
+        persistentVolumeClaim:
+          claimName: mysql-pvc
 
 ---
+
 apiVersion: v1
 kind: Service
 metadata:
@@ -60,5 +53,5 @@ spec:
   selector:
     app: mysql
   ports:
-    - port: 3306
-      targetPort: 3306
+  - port: 3306
+    targetPort: 3306
