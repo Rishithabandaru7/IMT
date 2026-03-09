@@ -1,9 +1,13 @@
 #!/bin/bash
+
 # Exit immediately if any command fails
 set -e
 
 echo "Stopping existing containers..."
 sudo docker compose down || true
+
+echo "Removing old mysql container if it exists..."
+sudo docker rm -f mysql_container || true
 
 echo "Pulling latest images..."
 sudo docker compose pull
